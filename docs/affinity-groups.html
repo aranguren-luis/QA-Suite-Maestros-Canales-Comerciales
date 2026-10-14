@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affinity Groups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+    --text:#0b0b0b; --text-2:#52514e; --muted:#898781;
+    --border:rgba(11,11,11,0.10); --grid:#e1e0d9;
+    --accent:#2a78d6; --accent-soft:#e3edfb;
+    --good:#0ca30c; --warning:#c98100; --serious:#ec835a; --critical:#d03b3b;
+    --sev-high:#b33923; --sev-medium:#c17a0e; --sev-low:#a9842f;
+    --sev-high-soft:#fbe2db; --sev-medium-soft:#f8ead0; --sev-low-soft:#f1e6cf;
+    --shadow: 0 1px 2px rgba(11,11,11,0.06), 0 8px 24px rgba(11,11,11,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19; --surface-2:#222221;
+      --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d85;
+      --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+      --accent:#5d9cf0; --accent-soft:#1c2a3b;
+      --good:#2fce2f; --warning:#fab219; --serious:#f0936c; --critical:#e66767;
+      --sev-high:#e2694a; --sev-medium:#e0a23d; --sev-low:#d3b06a;
+      --sev-high-soft:#3a241d; --sev-medium-soft:#3a2f1a; --sev-low-soft:#332c1c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#222221;
+    --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d85;
+    --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+    --accent:#5d9cf0; --accent-soft:#1c2a3b;
+    --good:#2fce2f; --warning:#fab219; --serious:#f0936c; --critical:#e66767;
+    --sev-high:#e2694a; --sev-medium:#e0a23d; --sev-low:#d3b06a;
+    --sev-high-soft:#3a241d; --sev-medium-soft:#3a2f1a; --sev-low-soft:#332c1c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--page); color:var(--text);
+    font-family:'Sora',system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding-inline:16px;
+  }
+  h1,h2,h3{font-family:'Sora',system-ui,sans-serif; font-weight:700; text-wrap:balance; margin:0;}
+  code,.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  p{color:var(--text-2); line-height:1.55; margin:0;}
+
+  .shell{max-width:1180px; margin:0 auto; display:flex; gap:24px; padding-block:20px 48px;}
+  .sidebar{
+    width:216px; flex:none; position:sticky; top:16px; align-self:flex-start;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; padding:10px 12px 18px;}
+  .brand .name{font-size:15px; font-weight:700;}
+  .brand .sub{font-size:11.5px; color:var(--muted); letter-spacing:.02em;}
+  .nav-btn{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px;
+    border:none; background:transparent; color:var(--text-2); font:inherit; font-size:14px;
+    font-weight:600; cursor:pointer; text-align:left; width:100%;
+  }
+  .nav-btn[hidden]{display:none;}
+  .nav-btn .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;}
+  .nav-btn.active{background:var(--accent-soft); color:var(--accent);}
+  .nav-btn.active .dot{background:var(--accent);}
+  .nav-btn:hover:not(.active){background:var(--surface-2);}
+  .theme-toggle{
+    margin-top:auto; display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface);
+    font-size:12.5px; color:var(--text-2); font-weight:600;
+  }
+  .theme-toggle button{
+    border:none; background:var(--surface-2); color:var(--text); border-radius:6px;
+    padding:4px 9px; font:inherit; font-weight:600; font-size:12px; cursor:pointer;
+  }
+
+  main{flex:1; min-width:0;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .view-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  .view-head h1{font-size:23px;}
+  .view-head .meta{font-size:12.5px; color:var(--muted);}
+
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:22px;}
+  .tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; box-shadow:var(--shadow); min-width:0;
+  }
+  .tile .label{font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  .tile .value{font-size:28px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;}
+  .tile .value small{font-size:14px; color:var(--text-2); font-weight:600;}
+  .tile.accent-good .value{color:var(--good);}
+  .tile.accent-critical .value{color:var(--critical);}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px; box-shadow:var(--shadow); min-width:0; margin-bottom:16px;
+  }
+  .card h2,.card h3{font-size:14.5px;}
+  .card .card-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+
+  .donut-row{display:flex; align-items:center; gap:22px; margin-top:14px; flex-wrap:wrap;}
+  .donut{width:148px;height:148px;border-radius:50%; flex:none; position:relative;}
+  .donut .hole{position:absolute; inset:21%; border-radius:50%; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .donut .hole b{font-size:22px; font-variant-numeric:tabular-nums;}
+  .donut .hole span{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+  .legend{display:flex; flex-direction:column; gap:9px; font-size:13px;}
+  .legend-item{display:flex; align-items:center; gap:8px;}
+  .legend-item .swatch{width:10px;height:10px;border-radius:3px; flex:none;}
+  .legend-item .n{margin-left:auto; font-variant-numeric:tabular-nums; font-weight:600; color:var(--text);}
+  .legend-item .pct{color:var(--muted); font-size:11.5px; width:38px; text-align:right;}
+
+  .barchart{display:flex; flex-direction:column; gap:12px; margin-top:16px;}
+  .bar-row{display:grid; grid-template-columns:140px 1fr 34px; align-items:center; gap:10px; font-size:12.5px;}
+  .bar-row .bar-track{height:14px; background:var(--surface-2); border-radius:7px; overflow:hidden;}
+  .bar-row .bar-fill{height:100%; border-radius:7px 0 0 7px;}
+  .bar-row .n{text-align:right; font-variant-numeric:tabular-nums; font-weight:600;}
+
+  .filters{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--border); background:var(--surface); color:var(--text-2);
+    border-radius:999px; padding:6px 13px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .sev-pill{
+    font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; flex:none; display:inline-block;
+  }
+  .sev-High{background:var(--sev-high-soft); color:var(--sev-high);}
+  .sev-Medium{background:var(--sev-medium-soft); color:var(--sev-medium);}
+  .sev-Low{background:var(--sev-low-soft); color:var(--sev-low);}
+  .res-pill{
+    font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; flex:none;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .res-pill::before{content:""; width:6px;height:6px;border-radius:50%;}
+  .res-bug{background:color-mix(in srgb, var(--critical) 14%, transparent); color:var(--critical);}
+  .res-bug::before{background:var(--critical);}
+  .res-ok{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good);}
+  .res-ok::before{background:var(--good);}
+  .res-no-repro{background:var(--surface-2); color:var(--muted);}
+  .res-no-repro::before{background:var(--muted);}
+
+  table.data{width:100%; border-collapse:collapse; font-size:13px;}
+  table.data th{text-align:left; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.03em; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.data td{padding:10px; border-bottom:1px solid var(--border); vertical-align:top;}
+  table.data tr:last-child td{border-bottom:none;}
+  table.data td.id-cell{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-2); white-space:nowrap;}
+  table.data td.wrap{min-width:220px;}
+  .bug-ref{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); margin-left:6px;}
+  .empty-state{color:var(--muted); font-size:13px; padding:18px 4px;}
+
+  .bug-list{display:flex; flex-direction:column; gap:10px;}
+  .bug-item{border:1px solid var(--border); border-radius:10px; overflow:hidden;}
+  .bug-item + .bug-item{margin-top:0;}
+  .bug-head{display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; flex-wrap:wrap; background:var(--surface);}
+  .bug-title{flex:1; min-width:160px; font-size:13.5px; font-weight:600;}
+  .bug-id{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); flex:none;}
+  .bug-tcs{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); flex:none;}
+  .bug-chevron{color:var(--muted); font-size:12px; transition:transform .15s; flex:none; margin-left:auto;}
+  .bug-item.open .bug-chevron{transform:rotate(90deg);}
+  .bug-body{display:none; padding:16px; border-top:1px solid var(--border);}
+  .bug-item.open .bug-body{display:block;}
+  .bug-kv{display:grid; grid-template-columns:140px 1fr; gap:10px 14px; font-size:13px; margin-bottom:14px;}
+  .bug-kv dt{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; padding-top:2px;}
+  .bug-kv dd{margin:0; color:var(--text);}
+  .repro-steps{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:7px;}
+  .repro-steps li{padding-left:2px;}
+  .evidence-shot{margin-top:4px;}
+  .evidence-shot img{max-width:100%; border-radius:8px; border:1px solid var(--border); display:block;}
+  .evidence-missing{color:var(--muted); font-size:12.5px; font-style:italic;}
+
+  @media (max-width:860px){
+    .shell{flex-direction:column; padding-inline:0;}
+    .sidebar{
+      position:sticky; top:0; width:auto; flex-direction:row; overflow-x:auto;
+      background:var(--page); padding:10px 16px; border-bottom:1px solid var(--border); z-index:10; gap:6px;
+    }
+    .brand, .theme-toggle{display:none;}
+    .nav-btn{width:auto; white-space:nowrap;}
+    main{padding-inline:16px;}
+    .grid-2{grid-template-columns:1fr;}
+    table.data{display:block; overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="brand">
+      <span class="name">Affinity Groups</span>
+      <span class="sub">QA Suite — Maestros Comerciales</span>
+    </div>
+    <button class="nav-btn active" data-view="overview"><span class="dot"></span>Overview</button>
+    <button class="nav-btn" data-view="bugs"><span class="dot"></span>Bugs</button>
+    <button class="nav-btn" id="nav-testcases" data-view="testcases" hidden><span class="dot"></span>Casos de Prueba</button>
+    <div class="theme-toggle">
+      <span>Theme</span>
+      <button id="theme-btn" type="button">System</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="view active" id="view-overview">
+      <div class="view-head">
+        <h1>Overview</h1>
+        <span class="meta"></span>
+      </div>
+
+      <div class="tiles"><div class="tile accent-critical"><div class="label">Bugs activos</div><div class="value">9</div></div><div class="tile"><div class="label">Casos de prueba</div><div class="value">92</div></div><div class="tile accent-good"><div class="label">Conformes</div><div class="value">69</div></div><div class="tile"><div class="label">No reproducibles</div><div class="value">0</div></div></div>
+
+      <div class="grid-2">
+        <div class="card"><h2>Resultado de los casos de prueba</h2><p class="card-sub">92 casos, última corrida</p><div class="donut-row"><div class="donut" style="background:conic-gradient(var(--critical) 0.0% 25.0%, var(--good) 25.0% 100.0%)"><div class="hole"><b>92</b><span>casos</span></div></div><div class="legend"><div class="legend-item"><span class="swatch" style="background:var(--critical)"></span>Bug<span class="n">23</span><span class="pct">25%</span></div><div class="legend-item"><span class="swatch" style="background:var(--good)"></span>Conforme<span class="n">69</span><span class="pct">75%</span></div></div></div></div>
+        <div class="card">
+          <h2>Severidad de los bugs activos</h2>
+          <p class="card-sub">9 bugs confirmados en este momento</p>
+          <div class="donut-row"><div class="donut" style="background:conic-gradient(var(--sev-high) 0.0% 11.1%, var(--sev-medium) 11.1% 66.7%, var(--sev-low) 66.7% 100.0%)"><div class="hole"><b>9</b><span>bugs</span></div></div><div class="legend"><div class="legend-item"><span class="swatch" style="background:var(--sev-high)"></span>High<span class="n">1</span><span class="pct">11%</span></div><div class="legend-item"><span class="swatch" style="background:var(--sev-medium)"></span>Medium<span class="n">5</span><span class="pct">56%</span></div><div class="legend-item"><span class="swatch" style="background:var(--sev-low)"></span>Low<span class="n">3</span><span class="pct">33%</span></div></div></div>
+        </div>
+      </div>
+
+      
+    </section>
+
+    <section class="view" id="view-bugs">
+      <div class="view-head">
+        <h1>Bugs</h1>
+        <span class="meta">9 bugs activos ahora mismo</span>
+      </div>
+      <div class="card">
+        <div class="bug-list" id="bugs-list"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-testcases">
+      <div class="view-head">
+        <h1>Casos de Prueba</h1>
+        <span class="meta">Última corrida</span>
+      </div>
+      <div class="filters" id="tc-filters">
+        <button class="chip active" data-fval="all">Todos</button>
+        <button class="chip" data-fval="bug">Bugs</button>
+        <button class="chip" data-fval="ok">Conformes</button>
+        <button class="chip" data-fval="no-repro">No reproducibles</button>
+      </div>
+      <div class="card">
+        <table class="data" id="testcases-table">
+          <thead><tr><th>ID</th><th>Título / qué prueba</th><th>Resultado</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var FINDINGS = [{"id":"HALLAZGO-005","title":"La acción destructiva de la fila está etiquetada \"Delete\" (y los diálogos usan lenguaje de \"deletion\"/\"removed\"); el proveedor documenta que debería llamarse \"Retire\" y que no debería existir un \"Delete\" simple","severity":"Low","cause":"No determinada en código (misma limitación de mock no localizable).","repro":"Inspeccionar los botones de acción de cualquier fila: \"Edit\", \"Deactivate\", \"Delete\" — ningún botón/ícono dice \"Retire\".","reproSteps":["Inspeccionar los botones de acción de cualquier fila: \"Edit\", \"Deactivate\", \"Delete\" — ningún botón/ícono dice \"Retire\"."],"evidence":"Test automatizado: `affinity-groups-ui.spec.ts` → `TC-AG-036`.","note":"","tcs":["TC-AG-036","TC-AG-038"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-003","title":"Algunos errores de validación del formulario de creación muestran la clave cruda de i18n (`validation.required`, `validation.invalidFormat`) en vez de un texto legible; otros errores del mismo formulario sí muestran texto resuelto (\"Invalid input\")","severity":"Low","cause":"No determinada en código (misma limitación: mock del demo no localizable 1:1 en el checkout actual). Hipótesis: faltan entradas de traducción para las claves `required`/`invalidFormat` en el bundle de idioma cargado.","repro":"Dejar Name vacío o con 1 carácter → error muestra literalmente `validation.required`. Code = \"CO RP!\" → error muestra literalmente `validation.invalidFormat`. Discount % vacío → error muestra `validation.required`. (Name con 61 caracteres y Discount 150/-5 sí muestran \"Invalid input\" correctamente.)","reproSteps":["Dejar Name vacío o con 1 carácter","error muestra literalmente `validation.required`. Code = \"CO RP!\"","error muestra literalmente `validation.invalidFormat`. Discount % vacío","error muestra `validation.required`. (Name con 61 caracteres y Discount 150/-5 sí muestran \"Invalid input\" correctamente.)"],"evidence":"Tests automatizados: `affinity-groups-ui.spec.ts` → `TC-AG-022`, `TC-AG-024`, `TC-AG-026` (verifican el rechazo funcional, no el texto del mensaje).","note":"","tcs":["TC-AG-022","TC-AG-024","TC-AG-026"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-004","title":"Editar un affinity group y dejar \"Request reason\" vacío no bloquea el envío — la edición se envía para aprobación exitosamente sin ningún error de validación","severity":"Medium","cause":"No determinada en código (misma limitación de mock no localizable). Hipótesis: el esquema de validación del formulario de edición no marca `changeReason` como requerido, a diferencia de Deactivate/Delete donde el campo de motivo sí bloquea el envío (asterisco `*` visible y aria-invalid activo mientras está vacío).","repro":"Editar cualquier grupo Approved, cambiar el Name, dejar Request reason vacío, click \"Submit for Approval\" → se envía con éxito (toast \"Submitted for approval.\", registro pasa a Pending).","reproSteps":["Editar cualquier grupo Approved, cambiar el Name, dejar Request reason vacío, click \"Submit for Approval\"","se envía con éxito (toast \"Submitted for approval.\", registro pasa a Pending)."],"evidence":"Test automatizado: `affinity-groups-ui.spec.ts` → `TC-AG-030`.","note":"","tcs":["TC-AG-030"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-008","title":"Las tarjetas de solicitud no distinguen tipo de acción (sin badge CREATE/EDIT), no muestran diff de campos en ediciones, el título de una edición usa el nombre PROPUESTO en vez del vigente, y \"Approve\" resuelve sin ningún diálogo de confirmación/comentario","severity":"Medium","cause":"No determinada en código (misma limitación de mock no localizable). Hipótesis: un único template de tarjeta genérico se reutiliza para los 4 tipos de solicitud sin lógica de diff/badges, y Approve se implementó como acción directa de un click en vez de abrir el mismo diálogo que Reject sí usa.","repro":"Editar CORPORATE (Name + Discount %, con motivo) → en Approval Requests la tarjeta muestra el nombre PROPUESTO como título y los valores propuestos planos, sin ninguna fila \"Name: CORPORATE → CORPORATE RENAMED\". Click \"Approve\" sobre cualquier tarjeta → se resuelve al instante sin diálogo.","reproSteps":["Editar CORPORATE (Name + Discount %, con motivo)","en Approval Requests la tarjeta muestra el nombre PROPUESTO como título y los valores propuestos planos, sin ninguna fila \"Name: CORPORATE","CORPORATE RENAMED\". Click \"Approve\" sobre cualquier tarjeta","se resuelve al instante sin diálogo."],"evidence":"Tests automatizados: `affinity-groups-ui.spec.ts` → `TC-AG-071`, `TC-AG-072`, `TC-AG-076`, `TC-AG-079`.","note":"","tcs":["TC-AG-071","TC-AG-072","TC-AG-076","TC-AG-079","TC-AG-080"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-009","title":"El formulario de Edit no tiene guard de cambio real (Request reason/Submit habilitados desde el inicio, un edit sin ningún cambio se envía igual), el campo Name no valida unicidad (ni exacta ni case-insensitive), y los valores propuestos de una edición ya se muestran en la lista mientras está Pending — y **persisten incluso después de un Reject explícito**, en vez de revertir al valor vigente","severity":"High","cause":"No determinada en código (demo sin backend real). Hipótesis: el mock aplica el PATCH del formulario directamente sobre el registro en memoria al momento del submit (optimistic update sin rollback); ni Approve ni Reject reconcilian contra el valor realmente vigente.","repro":"Editar un grupo Approved (ej. \"Grupo QA 071\") cambiando Discount % con motivo → Submit → la lista ya muestra el valor propuesto con Approval=Pending → Reject la solicitud → la lista conserva el valor propuesto con Approval=Rejected (no revierte). Por separado: crear un grupo con Name idéntico a uno existente (distinta capitalización) → se crea sin error.","reproSteps":["Editar un grupo Approved (ej. \"Grupo QA 071\") cambiando Discount % con motivo","Submit","la lista ya muestra el valor propuesto con Approval=Pending","Reject la solicitud","la lista conserva el valor propuesto con Approval=Rejected (no revierte). Por separado: crear un grupo con Name idéntico a uno existente (distinta capitalización)","se crea sin error."],"evidence":"Tests automatizados: `affinity-groups-ui.spec.ts` → `TC-AG-081`, `TC-AG-083`, `TC-AG-084`, `TC-AG-085`.","note":"","tcs":["TC-AG-081","TC-AG-083","TC-AG-084","TC-AG-085"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-010","title":"Click en los encabezados de columna (Name, Code, Subscription type, Discount %, Approval, Status) no cambia el orden de las filas ni muestra ningún indicador visual","severity":"Low","cause":"No determinada — el componente de tabla del mock no implementa sorting en absoluto.","repro":"Click en el encabezado \"Name\" de la lista → el orden de filas permanece idéntico (orden de inserción del seed), sin flecha/indicador.","reproSteps":["Click en el encabezado \"Name\" de la lista","el orden de filas permanece idéntico (orden de inserción del seed), sin flecha/indicador."],"evidence":"Test automatizado: `affinity-groups-ui.spec.ts` → `TC-AG-082`.","note":"","tcs":["TC-AG-082"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-011","title":"Un valor válido con decimales (ej. 12.5) no se normaliza a 2 decimales en el formulario, y la columna Discount % de la lista principal lo redondea al entero más cercano (13%) en vez de mostrar el valor con precisión","severity":"Medium","cause":"No determinada — hipótesis: la columna usa un formateador de enteros (`Math.round`) en vez de `toFixed(2)`, y el formulario no normaliza el valor crudo del input al guardar.","repro":"Crear un grupo con Discount % = 12.5 → se crea con éxito → la lista muestra \"13%\" en vez de \"12.50%\"; el formulario de edición muestra \"12.5\", no \"12.50\". Intentar 150, -5 o 12.345 → el envío se bloquea sin mensaje de error.","reproSteps":["Crear un grupo con Discount % = 12.5","se crea con éxito","la lista muestra \"13%\" en vez de \"12.50%\"; el formulario de edición muestra \"12.5\", no \"12.50\". Intentar 150, -5 o 12.345","el envío se bloquea sin mensaje de error."],"evidence":"Test automatizado: `affinity-groups-ui.spec.ts` → `TC-AG-087`.","note":"","tcs":["TC-AG-087"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-012","title":"El panel \"Filters\" de la lista principal solo ofrece Subscription type y Country — nunca tuvo un filtro de Status (Active/Inactive/Retired), y el filtro de Approval (Pending/Approved) que sí existía desapareció tras el redeploy del 2026-10-01","severity":"Medium","cause":"No determinada en código — demo sin backend real. Hipótesis: el componente de filtros se construyó para un subconjunto fijo de campos y nunca se extendió a Status.","repro":"Lista de Affinity Groups → click \"Filters\" → solo aparecen \"Subscription type\" y \"Country\", sin \"Approval\" ni \"Status\".","reproSteps":["Lista de Affinity Groups","click \"Filters\"","solo aparecen \"Subscription type\" y \"Country\", sin \"Approval\" ni \"Status\"."],"evidence":"Tests automatizados: `affinity-groups-ui.spec.ts` → `TC-AG-010`, `TC-AG-011`, `TC-AG-096`.","note":"","tcs":["TC-AG-010","TC-AG-011","TC-AG-095","TC-AG-096"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-013","title":"Los controles Approve/Reject de la propia solicitud creada por el usuario actual nunca se ocultan ni se deshabilitan — el mismo usuario puede aprobar su propio cambio (separación de funciones maker-checker no exigida por la UI)","severity":"Medium","cause":"No determinada — demo con un único usuario/sesión (\"Demo User\"), sin backend que valide server-side quién puede aprobar.","repro":"Editar un grupo → Submit for Approval → ir a Approval Requests → los botones Approve/Reject de esa misma solicitud están habilitados para el mismo usuario que la creó.","reproSteps":["Editar un grupo","Submit for Approval","ir a Approval Requests","los botones Approve/Reject de esa misma solicitud están habilitados para el mismo usuario que la creó."],"evidence":"Test automatizado: `affinity-groups-ui.spec.ts` → `TC-AG-092`.","note":"","tcs":["TC-AG-092"],"resolvedByMd":false,"hasEvidence":false}];
+  var TESTCASES = [{"tcs":["TC-AG-001"],"title":"TC-AG-001 - Navigate to Affinity Groups from Customer Segments","result":"ok"},{"tcs":["TC-AG-002"],"title":"TC-AG-002 - The Approval Requests tab shows a badge with the pending count","result":"ok"},{"tcs":["TC-AG-003"],"title":"TC-AG-003 - Switching between the list tab and Approval Requests produces no errors","result":"ok"},{"tcs":["TC-AG-004"],"title":"TC-AG-004 - New Affinity Group opens a blank creation form; a name opens edit","result":"ok"},{"tcs":["TC-AG-005"],"title":"TC-AG-005 - The list shows all columns; the Approval filter no longer exists in Filters (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-006"],"title":"TC-AG-006 - Searching by name filters the list","result":"ok"},{"tcs":["TC-AG-007"],"title":"TC-AG-007 - Searching by code filters the list","result":"ok"},{"tcs":["TC-AG-008"],"title":"TC-AG-008 - Filter by Subscription type (Prepaid/Postpaid/Hybrid)","result":"ok"},{"tcs":["TC-AG-009"],"title":"TC-AG-009 - Filter by Country (Venezuela)","result":"ok"},{"tcs":["TC-AG-010"],"title":"TC-AG-010 - The Approval status filter no longer exists; it is not possible to filter by Pending/Approved (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-012","severity":"Medium"},{"tcs":["TC-AG-011"],"title":"TC-AG-011 - Combine filters (Subscription type + Country) and clear them all","result":"bug","findingId":"HALLAZGO-012","severity":"Medium"},{"tcs":["TC-AG-012"],"title":"TC-AG-012 - Approval status badges render with the correct tone","result":"ok"},{"tcs":["TC-AG-013","TC-AG-039"],"title":"TC-AG-013 - The Status column shows Active and Inactive only after Deactivate is approved (Retired not reproducible except via Retire, see TC-AG-039)","result":"ok"},{"tcs":["TC-AG-014"],"title":"TC-AG-014 - The Discount % column is formatted correctly","result":"ok"},{"tcs":["TC-AG-015"],"title":"TC-AG-015 - Pagination and empty state","result":"ok"},{"tcs":["TC-AG-016"],"title":"TC-AG-016 - Creating a valid affinity group submits it for approval (pending)","result":"ok"},{"tcs":["TC-AG-017"],"title":"TC-AG-017 - Code is automatically converted to uppercase while typing","result":"ok"},{"tcs":["TC-AG-018"],"title":"TC-AG-018 - Subscription type selection (Prepaid/Postpaid/Hybrid)","result":"ok"},{"tcs":["TC-AG-019"],"title":"TC-AG-019 - Discount % accepts values from 0 to 100","result":"ok"},{"tcs":["TC-AG-020"],"title":"TC-AG-020 - An approval-note banner is shown on the form","result":"ok"},{"tcs":["TC-AG-021"],"title":"TC-AG-021 - On successful creation, a toast is shown and the user returns to the list","result":"ok"},{"tcs":["TC-AG-022"],"title":"TC-AG-022 - Name is required (2-60 characters)","result":"bug","findingId":"HALLAZGO-003","severity":"Low"},{"tcs":["TC-AG-023"],"title":"TC-AG-023 - Code is required (2-20 characters)","result":"ok"},{"tcs":["TC-AG-024"],"title":"TC-AG-024 - Code rejects invalid characters","result":"bug","findingId":"HALLAZGO-003","severity":"Low"},{"tcs":["TC-AG-025"],"title":"TC-AG-025 - Duplicate code rejected on create","result":"ok"},{"tcs":["TC-AG-026"],"title":"TC-AG-026 - Discount % is required and must be within 0-100","result":"bug","findingId":"HALLAZGO-003","severity":"Low"},{"tcs":["TC-AG-027"],"title":"TC-AG-027 - Country is required (only valid VE/DO/PE values selectable)","result":"ok"},{"tcs":["TC-AG-028"],"title":"TC-AG-028 - Duplicate code rejected on edit; keeping the group\\","result":"ok"},{"tcs":["TC-AG-029"],"title":"TC-AG-029 - Editing a group resubmits it for approval (Pending)","result":"ok"},{"tcs":["TC-AG-030"],"title":"TC-AG-030 - Editing without a Request reason does not block submission (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-004","severity":"Medium"},{"tcs":["TC-AG-031"],"title":"TC-AG-031 - Cancel returns to the list without saving","result":"ok"},{"tcs":["TC-AG-032"],"title":"TC-AG-032 - Deactivate goes to Pending and only applies Inactive once approved (confirms documented behavior; previous bypass resolved)","result":"ok"},{"tcs":["TC-AG-033"],"title":"TC-AG-033 - Activate goes to Pending and only applies Active once approved (confirms documented behavior; previous bypass resolved)","result":"ok"},{"tcs":["TC-AG-034","TC-AG-035"],"title":"TC-AG-034 and TC-AG-035 - Approve/reject a status-change request (now reproducible; previous bypass resolved)","result":"ok"},{"tcs":["TC-AG-036"],"title":"TC-AG-036 - The row\\","result":"bug","findingId":"HALLAZGO-005","severity":"Low"},{"tcs":["TC-AG-037"],"title":"TC-AG-037 - Retire/Delete is NOT available on the edit screen","result":"ok"},{"tcs":["TC-AG-038"],"title":"TC-AG-038 - Delete (retire) submits an approval request; the group remains active until approved","result":"bug","findingId":"HALLAZGO-005","severity":"Low"},{"tcs":["TC-AG-039"],"title":"TC-AG-039 - Approving a retire request marks the record as Retired and keeps it in the list (confirms documented behavior; previous hard-delete resolved)","result":"ok"},{"tcs":["TC-AG-040"],"title":"TC-AG-040 - Rejecting a retire request keeps the group","result":"ok"},{"tcs":["TC-AG-041"],"title":"TC-AG-041 - A group is always retirable, with no reference/usage block","result":"ok"},{"tcs":["TC-AG-042"],"title":"TC-AG-042 - Approving a pending request decrements the badge and the group becomes Approved","result":"ok"},{"tcs":["TC-AG-043"],"title":"TC-AG-043 - Rejecting a pending request with a reason","result":"ok"},{"tcs":["TC-AG-044"],"title":"TC-AG-044 - The request row shows name, code, requester and reason; a retire one shows its tag","result":"ok"},{"tcs":["TC-AG-045"],"title":"TC-AG-045 - Editing an approved group resubmits it for approval (segregation of duties not verifiable: single-user demo)","result":"ok"},{"tcs":["TC-AG-046"],"title":"TC-AG-046 - Approval Requests does NOT keep resolved requests (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-047"],"title":"TC-AG-047 - An approved request does NOT remain visible (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-048"],"title":"TC-AG-048 - A rejected request does NOT remain visible with its reason (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-049"],"title":"TC-AG-049 - There is no viewer role/second user to test read-only mode (not reproducible)","result":"ok"},{"tcs":["TC-AG-050"],"title":"TC-AG-050 - The tab does NOT work as a full audit trail: everything is purged once resolved (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-051"],"title":"TC-AG-051 - The Pending card shows no status badge at all (not reproducible: Approved/Rejected never coexist for comparison)","result":"ok"},{"tcs":["TC-AG-052"],"title":"TC-AG-052 - An approved request is NOT kept in Approval Requests, even though the group does end up Approved in the list","result":"ok"},{"tcs":["TC-AG-053"],"title":"TC-AG-053 - The badge only counts Pending; the list does NOT show all statuses (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-054"],"title":"TC-AG-054 - Approve/Reject only exist on Pending rows (vacuous truth: there is never an Approved/Rejected row to inspect)","result":"ok"},{"tcs":["TC-AG-055"],"title":"TC-AG-055 - Resolved retire/status-change requests are NOT kept with a type+outcome tag (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-056"],"title":"TC-AG-056 - There is no status filter (Approved/Rejected/Pending/All) in Approval Requests","result":"ok"},{"tcs":["TC-AG-057"],"title":"TC-AG-057 - The empty state appears even though requests were resolved during the session (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-058","TC-AG-059","TC-AG-060"],"title":"TC-AG-058, TC-AG-059 and TC-AG-060 - No permission system or second user to test visibility Rules (not reproducible; also \"Under Development\" per the vendor)","result":"ok"},{"tcs":["TC-AG-061"],"title":"TC-AG-061 - With an Edit Pending, Deactivate/Retire become disabled but Edit still opens the form in read-only mode (previous guard resolved)","result":"ok"},{"tcs":["TC-AG-062"],"title":"TC-AG-062 - The exact documented text (\"a request is already pending\") does not appear, but a tooltip reusing the Pending badge\\","result":"ok"},{"tcs":["TC-AG-063"],"title":"TC-AG-063 - A second request (Retire) no longer overwrites the pending one (Edit): the button is disabled and blocks the attempt (confirms documented behavior; previous guard resolved)","result":"ok"},{"tcs":["TC-AG-066","TC-AG-067"],"title":"TC-AG-066 and TC-AG-067 - No permission system to test blocking direct URL access to view-only/no-module (not reproducible; also \"Under Development\" per the vendor)","result":"ok"},{"tcs":["TC-AG-064"],"title":"TC-AG-064 - The duplicate guard applies per individual group; other groups are not affected","result":"ok"},{"tcs":["TC-AG-065"],"title":"TC-AG-065 - Edit becomes editable again after the pending request is approved","result":"ok"},{"tcs":["TC-AG-068"],"title":"TC-AG-068 - Duplicate code shows an error and the form keeps the entered data","result":"ok"},{"tcs":["TC-AG-069"],"title":"TC-AG-069 - The mock\\","result":"ok"},{"tcs":["TC-AG-070"],"title":"TC-AG-070 - Localization: labels, tabs and subscription types translate correctly to Spanish","result":"ok"},{"tcs":["TC-AG-071"],"title":"TC-AG-071 - The creation card does NOT show a CREATE badge (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-072"],"title":"TC-AG-072 - The edit card does NOT show a field-by-field diff (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-073","TC-AG-072"],"title":"TC-AG-073 - Retire cards do not show a field diff (consistent with TC-AG-072: no card shows a diff)","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-076"],"title":"TC-AG-076 - The edit card\\","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-077"],"title":"TC-AG-077 - Deactivate requires a reason before enabling submission","result":"ok"},{"tcs":["TC-AG-078"],"title":"TC-AG-078 - Retire (Delete) requires a reason before enabling submission","result":"ok"},{"tcs":["TC-AG-079"],"title":"TC-AG-079 - Approve resolves instantly with no dialog; the Reject reason is still marked optional (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-080"],"title":"TC-AG-080 - The Pending badge in the main list DOES show a tooltip naming the pending action on hover (confirms documented behavior)","result":"bug","findingId":"HALLAZGO-008","severity":"Medium"},{"tcs":["TC-AG-081"],"title":"TC-AG-081 - The read-only Edit form DOES have a Request reason field (disabled and empty), even though the vendor documents it should not exist (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-009","severity":"High"},{"tcs":["TC-AG-082"],"title":"TC-AG-082 - Column headers are NOT sortable: clicking does not change row order or show an indicator (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-010","severity":"Low"},{"tcs":["TC-AG-083"],"title":"TC-AG-083 - Request reason and Submit for Approval are enabled from the start; an edit with no real change still submits (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-009","severity":"High"},{"tcs":["TC-AG-084"],"title":"TC-AG-084 - Name is not validated for uniqueness (neither exact nor case-insensitive) on create (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-009","severity":"High"},{"tcs":["TC-AG-085"],"title":"TC-AG-085 - Edited values already show in the list while Pending, and persist after Reject instead of reverting (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-009","severity":"High"},{"tcs":["TC-AG-086"],"title":"TC-AG-086 - A rejected new group can be corrected and resubmitted, but Status stays Active (not Inactive) and the card does not identify the Create type (discrepancy vs. documented)","result":"ok"},{"tcs":["TC-AG-087"],"title":"TC-AG-087 - Discount % blocks out-of-range values or 3 decimals with no visible error; a valid value is not normalized to 2 decimals and the list rounds it to a whole number (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-011","severity":"Medium"},{"tcs":["TC-AG-088"],"title":"TC-AG-088 - Subscription Type only offers the 3 active values (Prepaid/Postpaid/Hybrid); rejecting an inactive value via API is not reproducible without a real backend","result":"ok"},{"tcs":["TC-AG-089"],"title":"TC-AG-089 - The Country selector only has 3 seeded countries (no exercisable pagination); rejecting an unknown country via API is not reproducible without a real backend (demo data limitation)","result":"ok"},{"tcs":["TC-AG-090"],"title":"TC-AG-090 - The GET /api/v1/affinity-groups/lookup endpoint is purely API, with no UI surface; not reproducible without a real backend","result":"ok"},{"tcs":["TC-AG-091"],"title":"TC-AG-091 - API guards (409/422/400/404) are purely API-level; not reproducible without a real backend","result":"ok"},{"tcs":["TC-AG-092"],"title":"TC-AG-092 - Approve/Reject controls for the current user\\","result":"bug","findingId":"HALLAZGO-013","severity":"Medium"},{"tcs":["TC-AG-093"],"title":"TC-AG-093 - The Reject reason is still not mandatory in the UI (discrepancy vs. documented: the vendor assumes the UI DOES enforce it)","result":"ok"},{"tcs":["TC-AG-094"],"title":"TC-AG-094 - A rollback of a failed approval requires forcing an invalid state via the backend; not reproducible without a real backend","result":"ok"},{"tcs":["TC-AG-095"],"title":"TC-AG-095 - The Request Type filter only offers the types of the currently pending requests, not all possible types (Create/Activate/Deactivate/Retire never coexist as options) (corrects earlier theory)","result":"bug","findingId":"HALLAZGO-012","severity":"Medium"},{"tcs":["TC-AG-096"],"title":"TC-AG-096 - There is no Status filter (Active/Inactive/Retired) in the Filters panel (discrepancy vs. documented)","result":"bug","findingId":"HALLAZGO-012","severity":"Medium"},{"tcs":["TC-AG-097","TC-AG-098","TC-AG-099"],"title":"TC-AG-097, TC-AG-098 and TC-AG-099 - No permission system or second user/role to test Viewer/Editor restrictions (not reproducible; also \"Under Development\" per the vendor)","result":"ok"},{"tcs":["TC-AG-100"],"title":"TC-AG-100 - At 375px width there is no horizontal page scroll (partial verification: a full axe/keyboard audit was not run)","result":"ok"}];
+  var RES_LABEL = {bug:'Bug', ok:'Conforme', 'no-repro':'No reproducible'};
+
+  function escapeHtml(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+
+  function sortedFindings(){
+    var order = {High:0, Medium:1, Low:2};
+    return FINDINGS.slice().sort(function(a,b){ return (order[a.severity]||9)-(order[b.severity]||9); });
+  }
+
+  function renderBugs(){
+    var list = document.getElementById('bugs-list');
+    var items = sortedFindings();
+    if(!items.length){ list.innerHTML = '<p class="empty-state">Sin bugs activos.</p>'; return; }
+    list.innerHTML = items.map(function(f){
+      var evidence = f.hasEvidence
+        ? '<div class="evidence-shot"><img src="evidence/'+encodeURIComponent(f.id)+'.png" alt="Evidencia '+escapeHtml(f.id)+'" loading="lazy"></div>'
+        : '<p class="evidence-missing">Sin evidencia capturada todavía.</p>';
+      return '<div class="bug-item">' +
+        '<div class="bug-head" data-toggle>' +
+          '<span class="sev-pill sev-'+f.severity+'">'+f.severity+'</span>' +
+          '<span class="bug-id">'+escapeHtml(f.id)+'</span>' +
+          '<span class="bug-title">'+escapeHtml(f.title)+'</span>' +
+          '<span class="bug-tcs">'+f.tcs.map(escapeHtml).join(', ')+'</span>' +
+          '<span class="bug-chevron">&#9656;</span>' +
+        '</div>' +
+        '<div class="bug-body">' +
+          '<dl class="bug-kv">' +
+            (f.descripcion ? '<dt>Descripción</dt><dd>'+escapeHtml(f.descripcion)+'</dd>' : '') +
+            (f.cause ? '<dt>Causa</dt><dd>'+escapeHtml(f.cause)+'</dd>' : '') +
+            (f.reproSteps && f.reproSteps.length
+              ? '<dt>Pasos para reproducir</dt><dd><ol class="repro-steps">'+f.reproSteps.map(function(s){return '<li>'+escapeHtml(s)+'</li>';}).join('')+'</ol></dd>'
+              : '') +
+          '</dl>' +
+          '<div class="bug-kv" style="grid-template-columns:140px 1fr;"><dt>Evidencia</dt><dd>'+evidence+'</dd></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    list.querySelectorAll('[data-toggle]').forEach(function(head){
+      head.addEventListener('click', function(){ head.parentElement.classList.toggle('open'); });
+    });
+  }
+
+  function renderTestCases(filter){
+    var tbody = document.querySelector('#testcases-table tbody');
+    var filtered = TESTCASES.filter(function(t){ return filter==='all' || t.result===filter; });
+    if(!filtered.length){ tbody.innerHTML = '<tr><td colspan="3"><p class="empty-state">Nada que mostrar con este filtro.</p></td></tr>'; return; }
+    tbody.innerHTML = filtered.map(function(t){
+      var pill = '<span class="res-pill res-'+t.result+'">'+RES_LABEL[t.result]+'</span>';
+      if(t.result==='bug') pill += '<span class="bug-ref">'+escapeHtml(t.findingId)+'</span>';
+      return '<tr>' +
+        '<td class="id-cell">'+t.tcs.map(escapeHtml).join(', ')+'</td>' +
+        '<td class="wrap">'+escapeHtml(t.title)+'</td>' +
+        '<td>'+pill+'</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('#tc-filters .chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('#tc-filters .chip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      renderTestCases(chip.dataset.fval);
+    });
+  });
+
+  var themeBtn = document.getElementById('theme-btn');
+  var themeState = 'system';
+  function applyTheme(){
+    if(themeState==='system'){ document.documentElement.removeAttribute('data-theme'); themeBtn.textContent='System'; }
+    else { document.documentElement.setAttribute('data-theme', themeState); themeBtn.textContent = themeState==='dark' ? 'Dark' : 'Light'; }
+  }
+  themeBtn.addEventListener('click', function(){
+    themeState = themeState==='system' ? 'light' : themeState==='light' ? 'dark' : 'system';
+    try{ localStorage.setItem('hallazgos-dash-theme', themeState); }catch(e){}
+    applyTheme();
+  });
+  try{ var saved = localStorage.getItem('hallazgos-dash-theme'); if(saved){ themeState = saved; } }catch(e){}
+  applyTheme();
+
+  if(TESTCASES.length){ document.getElementById('nav-testcases').hidden = false; }
+
+  renderBugs();
+  if(TESTCASES.length) renderTestCases('all');
+})();
+</script>
+</body>
+</html>
