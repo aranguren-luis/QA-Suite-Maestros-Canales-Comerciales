@@ -1,0 +1,6 @@
+node_modules/
+report/test-results/
+report/playwright-html/
+report/junit-results.xml
+.codegraph/
+.engram/
