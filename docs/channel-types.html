@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Channel Types</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+    --text:#0b0b0b; --text-2:#52514e; --muted:#898781;
+    --border:rgba(11,11,11,0.10); --grid:#e1e0d9;
+    --accent:#2a78d6; --accent-soft:#e3edfb;
+    --good:#0ca30c; --warning:#c98100; --serious:#ec835a; --critical:#d03b3b;
+    --sev-high:#b33923; --sev-medium:#c17a0e; --sev-low:#a9842f;
+    --sev-high-soft:#fbe2db; --sev-medium-soft:#f8ead0; --sev-low-soft:#f1e6cf;
+    --shadow: 0 1px 2px rgba(11,11,11,0.06), 0 8px 24px rgba(11,11,11,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19; --surface-2:#222221;
+      --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d85;
+      --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+      --accent:#5d9cf0; --accent-soft:#1c2a3b;
+      --good:#2fce2f; --warning:#fab219; --serious:#f0936c; --critical:#e66767;
+      --sev-high:#e2694a; --sev-medium:#e0a23d; --sev-low:#d3b06a;
+      --sev-high-soft:#3a241d; --sev-medium-soft:#3a2f1a; --sev-low-soft:#332c1c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#222221;
+    --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d85;
+    --border:rgba(255,255,255,0.12); --grid:#2c2c2a;
+    --accent:#5d9cf0; --accent-soft:#1c2a3b;
+    --good:#2fce2f; --warning:#fab219; --serious:#f0936c; --critical:#e66767;
+    --sev-high:#e2694a; --sev-medium:#e0a23d; --sev-low:#d3b06a;
+    --sev-high-soft:#3a241d; --sev-medium-soft:#3a2f1a; --sev-low-soft:#332c1c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--page); color:var(--text);
+    font-family:'Sora',system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding-inline:16px;
+  }
+  h1,h2,h3{font-family:'Sora',system-ui,sans-serif; font-weight:700; text-wrap:balance; margin:0;}
+  code,.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  p{color:var(--text-2); line-height:1.55; margin:0;}
+
+  .shell{max-width:1180px; margin:0 auto; display:flex; gap:24px; padding-block:20px 48px;}
+  .sidebar{
+    width:216px; flex:none; position:sticky; top:16px; align-self:flex-start;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; padding:10px 12px 18px;}
+  .brand .name{font-size:15px; font-weight:700;}
+  .brand .sub{font-size:11.5px; color:var(--muted); letter-spacing:.02em;}
+  .nav-btn{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px;
+    border:none; background:transparent; color:var(--text-2); font:inherit; font-size:14px;
+    font-weight:600; cursor:pointer; text-align:left; width:100%;
+  }
+  .nav-btn[hidden]{display:none;}
+  .nav-btn .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;}
+  .nav-btn.active{background:var(--accent-soft); color:var(--accent);}
+  .nav-btn.active .dot{background:var(--accent);}
+  .nav-btn:hover:not(.active){background:var(--surface-2);}
+  .theme-toggle{
+    margin-top:auto; display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface);
+    font-size:12.5px; color:var(--text-2); font-weight:600;
+  }
+  .theme-toggle button{
+    border:none; background:var(--surface-2); color:var(--text); border-radius:6px;
+    padding:4px 9px; font:inherit; font-weight:600; font-size:12px; cursor:pointer;
+  }
+
+  main{flex:1; min-width:0;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .view-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  .view-head h1{font-size:23px;}
+  .view-head .meta{font-size:12.5px; color:var(--muted);}
+
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:22px;}
+  .tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; box-shadow:var(--shadow); min-width:0;
+  }
+  .tile .label{font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  .tile .value{font-size:28px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums;}
+  .tile .value small{font-size:14px; color:var(--text-2); font-weight:600;}
+  .tile.accent-good .value{color:var(--good);}
+  .tile.accent-critical .value{color:var(--critical);}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px; box-shadow:var(--shadow); min-width:0; margin-bottom:16px;
+  }
+  .card h2,.card h3{font-size:14.5px;}
+  .card .card-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+
+  .donut-row{display:flex; align-items:center; gap:22px; margin-top:14px; flex-wrap:wrap;}
+  .donut{width:148px;height:148px;border-radius:50%; flex:none; position:relative;}
+  .donut .hole{position:absolute; inset:21%; border-radius:50%; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .donut .hole b{font-size:22px; font-variant-numeric:tabular-nums;}
+  .donut .hole span{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+  .legend{display:flex; flex-direction:column; gap:9px; font-size:13px;}
+  .legend-item{display:flex; align-items:center; gap:8px;}
+  .legend-item .swatch{width:10px;height:10px;border-radius:3px; flex:none;}
+  .legend-item .n{margin-left:auto; font-variant-numeric:tabular-nums; font-weight:600; color:var(--text);}
+  .legend-item .pct{color:var(--muted); font-size:11.5px; width:38px; text-align:right;}
+
+  .barchart{display:flex; flex-direction:column; gap:12px; margin-top:16px;}
+  .bar-row{display:grid; grid-template-columns:140px 1fr 34px; align-items:center; gap:10px; font-size:12.5px;}
+  .bar-row .bar-track{height:14px; background:var(--surface-2); border-radius:7px; overflow:hidden;}
+  .bar-row .bar-fill{height:100%; border-radius:7px 0 0 7px;}
+  .bar-row .n{text-align:right; font-variant-numeric:tabular-nums; font-weight:600;}
+
+  .filters{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--border); background:var(--surface); color:var(--text-2);
+    border-radius:999px; padding:6px 13px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .sev-pill{
+    font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; flex:none; display:inline-block;
+  }
+  .sev-High{background:var(--sev-high-soft); color:var(--sev-high);}
+  .sev-Medium{background:var(--sev-medium-soft); color:var(--sev-medium);}
+  .sev-Low{background:var(--sev-low-soft); color:var(--sev-low);}
+  .res-pill{
+    font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; flex:none;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .res-pill::before{content:""; width:6px;height:6px;border-radius:50%;}
+  .res-bug{background:color-mix(in srgb, var(--critical) 14%, transparent); color:var(--critical);}
+  .res-bug::before{background:var(--critical);}
+  .res-ok{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good);}
+  .res-ok::before{background:var(--good);}
+  .res-no-repro{background:var(--surface-2); color:var(--muted);}
+  .res-no-repro::before{background:var(--muted);}
+
+  table.data{width:100%; border-collapse:collapse; font-size:13px;}
+  table.data th{text-align:left; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.03em; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.data td{padding:10px; border-bottom:1px solid var(--border); vertical-align:top;}
+  table.data tr:last-child td{border-bottom:none;}
+  table.data td.id-cell{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-2); white-space:nowrap;}
+  table.data td.wrap{min-width:220px;}
+  .bug-ref{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); margin-left:6px;}
+  .empty-state{color:var(--muted); font-size:13px; padding:18px 4px;}
+
+  .bug-list{display:flex; flex-direction:column; gap:10px;}
+  .bug-item{border:1px solid var(--border); border-radius:10px; overflow:hidden;}
+  .bug-item + .bug-item{margin-top:0;}
+  .bug-head{display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; flex-wrap:wrap; background:var(--surface);}
+  .bug-title{flex:1; min-width:160px; font-size:13.5px; font-weight:600;}
+  .bug-id{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); flex:none;}
+  .bug-tcs{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); flex:none;}
+  .bug-chevron{color:var(--muted); font-size:12px; transition:transform .15s; flex:none; margin-left:auto;}
+  .bug-item.open .bug-chevron{transform:rotate(90deg);}
+  .bug-body{display:none; padding:16px; border-top:1px solid var(--border);}
+  .bug-item.open .bug-body{display:block;}
+  .bug-kv{display:grid; grid-template-columns:140px 1fr; gap:10px 14px; font-size:13px; margin-bottom:14px;}
+  .bug-kv dt{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; padding-top:2px;}
+  .bug-kv dd{margin:0; color:var(--text);}
+  .repro-steps{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:7px;}
+  .repro-steps li{padding-left:2px;}
+  .evidence-shot{margin-top:4px;}
+  .evidence-shot img{max-width:100%; border-radius:8px; border:1px solid var(--border); display:block;}
+  .evidence-missing{color:var(--muted); font-size:12.5px; font-style:italic;}
+
+  @media (max-width:860px){
+    .shell{flex-direction:column; padding-inline:0;}
+    .sidebar{
+      position:sticky; top:0; width:auto; flex-direction:row; overflow-x:auto;
+      background:var(--page); padding:10px 16px; border-bottom:1px solid var(--border); z-index:10; gap:6px;
+    }
+    .brand, .theme-toggle{display:none;}
+    .nav-btn{width:auto; white-space:nowrap;}
+    main{padding-inline:16px;}
+    .grid-2{grid-template-columns:1fr;}
+    table.data{display:block; overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="brand">
+      <span class="name">Channel Types</span>
+      <span class="sub">QA Suite — Maestros Comerciales</span>
+    </div>
+    <button class="nav-btn active" data-view="overview"><span class="dot"></span>Overview</button>
+    <button class="nav-btn" data-view="bugs"><span class="dot"></span>Bugs</button>
+    <button class="nav-btn" id="nav-testcases" data-view="testcases" hidden><span class="dot"></span>Casos de Prueba</button>
+    <div class="theme-toggle">
+      <span>Theme</span>
+      <button id="theme-btn" type="button">System</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="view active" id="view-overview">
+      <div class="view-head">
+        <h1>Overview</h1>
+        <span class="meta"></span>
+      </div>
+
+      <div class="tiles"><div class="tile accent-critical"><div class="label">Bugs activos</div><div class="value">6</div></div><div class="tile"><div class="label">Casos de prueba</div><div class="value">62</div></div><div class="tile accent-good"><div class="label">Conformes</div><div class="value">50</div></div><div class="tile"><div class="label">No reproducibles</div><div class="value">0</div></div></div>
+
+      <div class="grid-2">
+        <div class="card"><h2>Resultado de los casos de prueba</h2><p class="card-sub">62 casos, última corrida</p><div class="donut-row"><div class="donut" style="background:conic-gradient(var(--critical) 0.0% 19.4%, var(--good) 19.4% 100.0%)"><div class="hole"><b>62</b><span>casos</span></div></div><div class="legend"><div class="legend-item"><span class="swatch" style="background:var(--critical)"></span>Bug<span class="n">12</span><span class="pct">19%</span></div><div class="legend-item"><span class="swatch" style="background:var(--good)"></span>Conforme<span class="n">50</span><span class="pct">81%</span></div></div></div></div>
+        <div class="card">
+          <h2>Severidad de los bugs activos</h2>
+          <p class="card-sub">6 bugs confirmados en este momento</p>
+          <div class="donut-row"><div class="donut" style="background:conic-gradient(var(--sev-high) 0.0% 16.7%, var(--sev-medium) 16.7% 83.3%, var(--sev-low) 83.3% 100.0%)"><div class="hole"><b>6</b><span>bugs</span></div></div><div class="legend"><div class="legend-item"><span class="swatch" style="background:var(--sev-high)"></span>High<span class="n">1</span><span class="pct">17%</span></div><div class="legend-item"><span class="swatch" style="background:var(--sev-medium)"></span>Medium<span class="n">4</span><span class="pct">67%</span></div><div class="legend-item"><span class="swatch" style="background:var(--sev-low)"></span>Low<span class="n">1</span><span class="pct">17%</span></div></div></div>
+        </div>
+      </div>
+
+      
+    </section>
+
+    <section class="view" id="view-bugs">
+      <div class="view-head">
+        <h1>Bugs</h1>
+        <span class="meta">6 bugs activos ahora mismo</span>
+      </div>
+      <div class="card">
+        <div class="bug-list" id="bugs-list"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-testcases">
+      <div class="view-head">
+        <h1>Casos de Prueba</h1>
+        <span class="meta">Última corrida</span>
+      </div>
+      <div class="filters" id="tc-filters">
+        <button class="chip active" data-fval="all">Todos</button>
+        <button class="chip" data-fval="bug">Bugs</button>
+        <button class="chip" data-fval="ok">Conformes</button>
+        <button class="chip" data-fval="no-repro">No reproducibles</button>
+      </div>
+      <div class="card">
+        <table class="data" id="testcases-table">
+          <thead><tr><th>ID</th><th>Título / qué prueba</th><th>Resultado</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var FINDINGS = [{"id":"HALLAZGO-101","title":"El campo Code no elimina espacios mientras se escribe","severity":"Medium","cause":"El proveedor documenta que el campo Code \"convierte la entrada a mayúsculas y elimina espacios mientras se escribe\" (ej. `retail chain` → `RETAILCHAIN`). En la práctica, solo se aplica `.toUpperCase()` — los espacios se conservan literalmente (`retail chain qa011` → `RETAIL CHAIN QA011`), lo que dispara el error de formato inválido ya que el patrón de Code no permite espacios.","repro":"Abrir \"New Channel Type\". Escribir `retail chain qa011` en el campo Code. El campo muestra `RETAIL CHAIN QA011` (con espacios), marcado inválido.","reproSteps":["Abrir \"New Channel Type\". Escribir `retail chain qa011` en el campo Code. El campo muestra `RETAIL CHAIN QA011` (con espacios), marcado inválido."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-015`.","note":"","tcs":["TC-CHT-015"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-102","title":"El campo Code es editable en modo Edit, en vez de quedar bloqueado","severity":"Medium","cause":"El proveedor documenta explícitamente: \"Code solo puede establecerse en creación; queda bloqueado/solo lectura en edición.\" En la práctica, el campo Code es un textbox editable normal en el diálogo de Edit — se pudo cambiar un código existente y la solicitud pendiente resultante refleja el cambio aceptado sin que el campo haya estado bloqueado.","repro":"Click en \"Edit\" sobre cualquier Channel Type existente. Cambiar el campo Code y enviar. La solicitud pendiente muestra el diff del Code cambiado — el campo no estaba bloqueado.","reproSteps":["Click en \"Edit\" sobre cualquier Channel Type existente. Cambiar el campo Code y enviar. La solicitud pendiente muestra el diff del Code cambiado — el campo no estaba bloqueado."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-015`, `TC-CHT-037`.","note":"","tcs":["TC-CHT-015","TC-CHT-037"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-103","title":"Mensajes de validación muestran claves de i18n crudas sin traducir","severity":"Low","cause":"Confirmado en 2 módulos (Affinity Groups y Channel Types) — es un bug del componente de validación/i18n compartido, no específico de este módulo. Faltan entradas de traducción para las claves `validation.required`/`validation.invalidFormat` en el bundle de idioma cargado.","repro":"Abrir \"New Channel Type\". Dejar Name = \"A\" (1 carácter) y Code = \"RETAIL@CHAIN\" (carácter inválido), enviar. Name muestra `validation.required`; Code muestra `validation.invalidFormat` — ambos sin traducir.","reproSteps":["Abrir \"New Channel Type\". Dejar Name = \"A\" (1 carácter) y Code = \"RETAIL@CHAIN\" (carácter inválido), enviar. Name muestra `validation.required`; Code muestra `validation.invalidFormat` — ambos sin traducir."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-014`, `TC-CHT-015`.","note":"","tcs":["TC-CHT-014","TC-CHT-015"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-104","title":"'Request reason' y 'Submit for Approval' nunca se deshabilitan por falta de un cambio real","severity":"High","cause":"El proveedor documenta que, al editar, 'Request reason' y 'Submit for Approval' deben permanecer deshabilitados hasta que exista un cambio real, y que Submit debe mostrar \"Submitting…\" mientras la solicitud está en curso. En la práctica, ambos campos están siempre habilitados en el diálogo de Edit, sin importar si hubo o no un cambio real — y aunque Submit sí se deshabilita correctamente mientras la petición está en curso, su texto nunca cambia a \"Submitting…\".","repro":"Abrir \"Edit\" sobre cualquier Channel Type. 'Request reason' y 'Submit for Approval' aparecen habilitados de inmediato, sin tocar nada. Escribir solo espacios, o cambiar un campo y revertirlo a su valor original — ambos siguen habilitados en todos los casos.","reproSteps":["Abrir \"Edit\" sobre cualquier Channel Type. 'Request reason' y 'Submit for Approval' aparecen habilitados de inmediato, sin tocar nada. Escribir solo espacios, o cambiar un campo y revertirlo a su valor original — ambos siguen habilitados en todos los casos."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-031`, `TC-CHT-032`, `TC-CHT-033`, `TC-CHT-035`.","note":"","tcs":["TC-CHT-031","TC-CHT-032","TC-CHT-033","TC-CHT-035"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-105","title":"Las tarjetas de Approval Requests muestran diff de campos también en Create y Activate/Deactivate","severity":"Medium","cause":"El proveedor documenta que el diff campo por campo es exclusivo de las solicitudes de edición — una tarjeta CREATE o Activate/Deactivate solo debe mostrar name/code/badges y la línea \"Requested by…\". En la práctica, el demo renderiza el diff también en solicitudes de creación y de cambio de estado.","repro":"Crear un Channel Type nuevo o desactivar uno existente, confirmando la solicitud. Abrir \"Approval Requests\". La tarjeta resultante incluye filas de diff pese a ser una creación o un cambio de estado.","reproSteps":["Crear un Channel Type nuevo o desactivar uno existente, confirmando la solicitud. Abrir \"Approval Requests\". La tarjeta resultante incluye filas de diff pese a ser una creación o un cambio de estado."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-041`, `TC-CHT-043`.","note":"","tcs":["TC-CHT-041","TC-CHT-043"],"resolvedByMd":false,"hasEvidence":false},{"id":"HALLAZGO-106","title":"El filtro 'Request type' ofrece el catálogo completo de acciones en vez del catálogo cerrado documentado","severity":"Medium","cause":"El proveedor documenta que, para Channel Types (sin Delete/Retire), el filtro \"Request type\" ofrece solo Create/Edit/Activate/Deactivate. En la práctica, el combobox ofrece las 8 opciones del catálogo completo. Hallazgo secundario: ambos combobox de este filtro carecen de nombre accesible.","repro":"Abrir \"Approval Requests\" con al menos una solicitud en la lista. Click en el combobox \"Request type\". Se listan 8 opciones en vez de las 5 documentadas.","reproSteps":["Abrir \"Approval Requests\" con al menos una solicitud en la lista. Click en el combobox \"Request type\". Se listan 8 opciones en vez de las 5 documentadas."],"evidence":"Tests automatizados: `channel-types-ui.spec.ts` → `TC-CHT-049`, `TC-CHT-059`.","note":"","tcs":["TC-CHT-049","TC-CHT-059"],"resolvedByMd":false,"hasEvidence":false}];
+  var TESTCASES = [{"tcs":["TC-CHT-001"],"title":"TC-CHT-001 - Navigate to the Channel Types master","result":"ok"},{"tcs":["TC-CHT-002"],"title":"TC-CHT-002 - The Approval Requests tab shows a badge that reflects the real pending count","result":"ok"},{"tcs":["TC-CHT-003"],"title":"TC-CHT-003 - Switch between the list and Approval Requests tabs","result":"ok"},{"tcs":["TC-CHT-004"],"title":"TC-CHT-004 - 'New Channel Type' opens the create dialog; row Edit opens the edit dialog","result":"ok"},{"tcs":["TC-CHT-005"],"title":"TC-CHT-005 - The list shows all expected columns","result":"ok"},{"tcs":["TC-CHT-006"],"title":"TC-CHT-006 - The Partners count is a link for every row; clicking it navigates to Channel Partners","result":"ok"},{"tcs":["TC-CHT-007"],"title":"TC-CHT-007 - Management nature badge (Internal / Third-party)","result":"ok"},{"tcs":["TC-CHT-008"],"title":"TC-CHT-008 - The Approval column shows a pending indicator or a dash","result":"ok"},{"tcs":["TC-CHT-009"],"title":"TC-CHT-009 - Export and toggle columns","result":"ok"},{"tcs":["TC-CHT-010"],"title":"TC-CHT-010 - Create a valid Channel Type - it waits for approval","result":"ok"},{"tcs":["TC-CHT-011"],"title":"TC-CHT-011 - Code is converted to uppercase (SCREAMING_SNAKE identifier)","result":"ok"},{"tcs":["TC-CHT-012"],"title":"TC-CHT-012 - Management nature selection (Internal / Third-party)","result":"ok"},{"tcs":["TC-CHT-013"],"title":"TC-CHT-013 - A new type appears in Approval Requests as a pending 'create' request","result":"ok"},{"tcs":["TC-CHT-014"],"title":"TC-CHT-014 - Name is required (2-128 characters)","result":"bug","findingId":"HALLAZGO-103","severity":"Low"},{"tcs":["TC-CHT-015"],"title":"TC-CHT-015 - Code validation: required, uppercase, 2-64 chars, invalid chars rejected","result":"bug","findingId":"HALLAZGO-101","severity":"Medium"},{"tcs":["TC-CHT-015"],"title":"TC-CHT-015b - Code is locked/read-only when editing (documented, not enforced)","result":"bug","findingId":"HALLAZGO-101","severity":"Medium"},{"tcs":["TC-CHT-016"],"title":"TC-CHT-016 - Duplicate code rejected","result":"ok"},{"tcs":["TC-CHT-017"],"title":"TC-CHT-017 - Request reason is required when editing","result":"ok"},{"tcs":["TC-CHT-018"],"title":"TC-CHT-018 - Editing leaves a pending change; the live record stays intact until approved","result":"ok"},{"tcs":["TC-CHT-019"],"title":"TC-CHT-019 - Deactivate / Activate leaves a pending status-change request","result":"ok"},{"tcs":["TC-CHT-020"],"title":"TC-CHT-020 - Approve/reject a status-change request","result":"ok"},{"tcs":["TC-CHT-021"],"title":"TC-CHT-021 - No Delete/Retire action exists for Channel Types (closed catalog)","result":"ok"},{"tcs":["TC-CHT-022"],"title":"TC-CHT-022 - Approval Requests lists the full history (pending + approved + rejected)","result":"ok"},{"tcs":["TC-CHT-023"],"title":"TC-CHT-023 - Approve comment is optional; Reject comment is mandatory","result":"ok"},{"tcs":["TC-CHT-024"],"title":"TC-CHT-024 - Resolved requests persist in Approval Requests (audit trail)","result":"ok"},{"tcs":["TC-CHT-025","TC-CHT-027"],"title":"TC-CHT-025, TC-CHT-027 - No permission system or second user/role to test visibility/access rules (not reproducible; also \"Under Development\" per the vendor)","result":"ok"},{"tcs":["TC-CHT-026"],"title":"TC-CHT-026 - A pending request blocks Edit and Activate/Deactivate on that type","result":"ok"},{"tcs":["TC-CHT-028"],"title":"TC-CHT-028 - Localization: labels, natures and statuses render in the active language","result":"ok"},{"tcs":["TC-CHT-029"],"title":"TC-CHT-029 - Sort the list by a sortable column (ascending / descending)","result":"ok"},{"tcs":["TC-CHT-030"],"title":"TC-CHT-030 - The 'Last updated' column is not sortable","result":"ok"},{"tcs":["TC-CHT-031"],"title":"TC-CHT-031 - 'Request reason' is disabled by default when editing and enables only after a real change","result":"bug","findingId":"HALLAZGO-104","severity":"High"},{"tcs":["TC-CHT-032"],"title":"TC-CHT-032 - 'Request reason' and 'Submit for Approval' stay disabled without a real change, including whitespace-only edits","result":"bug","findingId":"HALLAZGO-104","severity":"High"},{"tcs":["TC-CHT-033"],"title":"TC-CHT-033 - 'Request reason' text alone does not count as a change","result":"bug","findingId":"HALLAZGO-104","severity":"High"},{"tcs":["TC-CHT-034"],"title":"TC-CHT-034 - On create, 'Request reason' is enabled and optional","result":"ok"},{"tcs":["TC-CHT-035"],"title":"TC-CHT-035 - 'Submit for Approval' stays disabled until a real change, then shows 'Submitting...' while processing","result":"bug","findingId":"HALLAZGO-104","severity":"High"},{"tcs":["TC-CHT-036"],"title":"TC-CHT-036 - A pending record has no reachable \"frozen view\" on this demo (no Name link, Edit disabled)","result":"ok"},{"tcs":["TC-CHT-037"],"title":"TC-CHT-037 - Code stays locked/read-only when editing; Name and Management nature remain editable (documented, not enforced)","result":"bug","findingId":"HALLAZGO-102","severity":"Medium"},{"tcs":["TC-CHT-038"],"title":"TC-CHT-038 - 'Management nature' defaults to 'Third-party' when creating","result":"ok"},{"tcs":["TC-CHT-039","TC-CHT-040"],"title":"TC-CHT-039, TC-CHT-040 - No permission system or second user/role to test a view-only/no-access user (not reproducible; also \"Under Development\" per the vendor)","result":"ok"},{"tcs":["TC-CHT-041"],"title":"TC-CHT-041 - A pending CREATE request card shows name, code and badges, without a field diff","result":"bug","findingId":"HALLAZGO-105","severity":"Medium"},{"tcs":["TC-CHT-042"],"title":"TC-CHT-042 - A pending EDIT request card shows a field-by-field diff of only the changed fields","result":"ok"},{"tcs":["TC-CHT-043"],"title":"TC-CHT-043 - A pending Activate/Deactivate request shows no field diff, same as a creation","result":"bug","findingId":"HALLAZGO-105","severity":"Medium"},{"tcs":["TC-CHT-044"],"title":"TC-CHT-044 - Request reason only appears on the card when the request carries a non-empty reason","result":"ok"},{"tcs":["TC-CHT-045"],"title":"TC-CHT-045 - Pending cards show Approve/Reject without Reviewed-by; resolved cards show Reviewed-by without action buttons","result":"ok"},{"tcs":["TC-CHT-046"],"title":"TC-CHT-046 - The request card title uses the live name on edits and the proposed name on creations","result":"ok"},{"tcs":["TC-CHT-047"],"title":"TC-CHT-047 - Deactivate/Activate confirmation requires a reason and the status does not change until approved","result":"ok"},{"tcs":["TC-CHT-048"],"title":"TC-CHT-048 - The Pending badge tooltip names the pending action or shows the literal status transition","result":"ok"},{"tcs":["TC-CHT-049"],"title":"TC-CHT-049 - Approval Requests: search by name/reason, status filter, request-type catalog, and Clear filters","result":"bug","findingId":"HALLAZGO-106","severity":"Medium"},{"tcs":["TC-CHT-050"],"title":"TC-CHT-050 - Review dialog: Reject requires a comment, Approve is optional","result":"ok"},{"tcs":["TC-CHT-051"],"title":"TC-CHT-051 - A decided request's reviewer comment shows only when it exists","result":"ok"},{"tcs":["TC-CHT-052"],"title":"TC-CHT-052 - Edited values become active only once the edit request is approved","result":"ok"},{"tcs":["TC-CHT-053"],"title":"TC-CHT-053 - A rejected creation can be corrected and resubmitted","result":"ok"},{"tcs":["TC-CHT-054"],"title":"TC-CHT-054 - Only Active, approved channel types are offered for assignment in Channel Partners","result":"ok"},{"tcs":["TC-CHT-055"],"title":"TC-CHT-055 - A pending request blocks a second one on the same type; a no-op status change is never offered by the UI (API-level contract per source only, see note)","result":"ok"},{"tcs":["TC-CHT-056"],"title":"TC-CHT-056 - No second user/role to test maker-checker self-approval (not reproducible; guard confirmed read-only in backend source)","result":"ok"},{"tcs":["TC-CHT-057"],"title":"TC-CHT-057 - Reject requires a non-empty comment in the UI; the API-level contract cannot be confirmed (see note)","result":"ok"},{"tcs":["TC-CHT-058"],"title":"TC-CHT-058 - A failed approval rolls back atomically (not reproducible - no way to force a server-side failure from the UI; see note)","result":"ok"},{"tcs":["TC-CHT-059"],"title":"TC-CHT-059 - Approval Requests: search and filters narrow the list correctly (reconfirms BUG-06 for the Request type catalog)","result":"bug","findingId":"HALLAZGO-106","severity":"Medium"},{"tcs":["TC-CHT-060"],"title":"TC-CHT-060 - No second user/role to test permission-gated row actions (not reproducible; \"Under Development\" per the vendor; guard confirmed read-only in frontend source)","result":"ok"},{"tcs":["TC-CHT-061"],"title":"TC-CHT-061 - API-level permission guard on create/update/activation/approve/reject (not reproducible; no second user/role; guard confirmed read-only in backend source)","result":"ok"},{"tcs":["TC-CHT-062"],"title":"TC-CHT-062 - Approve/Reject require the canApprove permission, distinct from view/edit (not reproducible; no second user/role; guard confirmed read-only in frontend and backend source)","result":"ok"},{"tcs":["TC-CHT-063"],"title":"TC-CHT-063 - Responsive layout (desktop/mobile) and baseline accessibility: labelled fields, visible keyboard focus, badge contrast","result":"ok"}];
+  var RES_LABEL = {bug:'Bug', ok:'Conforme', 'no-repro':'No reproducible'};
+
+  function escapeHtml(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+
+  function sortedFindings(){
+    var order = {High:0, Medium:1, Low:2};
+    return FINDINGS.slice().sort(function(a,b){ return (order[a.severity]||9)-(order[b.severity]||9); });
+  }
+
+  function renderBugs(){
+    var list = document.getElementById('bugs-list');
+    var items = sortedFindings();
+    if(!items.length){ list.innerHTML = '<p class="empty-state">Sin bugs activos.</p>'; return; }
+    list.innerHTML = items.map(function(f){
+      var evidence = f.hasEvidence
+        ? '<div class="evidence-shot"><img src="evidence/'+encodeURIComponent(f.id)+'.png" alt="Evidencia '+escapeHtml(f.id)+'" loading="lazy"></div>'
+        : '<p class="evidence-missing">Sin evidencia capturada todavía.</p>';
+      return '<div class="bug-item">' +
+        '<div class="bug-head" data-toggle>' +
+          '<span class="sev-pill sev-'+f.severity+'">'+f.severity+'</span>' +
+          '<span class="bug-id">'+escapeHtml(f.id)+'</span>' +
+          '<span class="bug-title">'+escapeHtml(f.title)+'</span>' +
+          '<span class="bug-tcs">'+f.tcs.map(escapeHtml).join(', ')+'</span>' +
+          '<span class="bug-chevron">&#9656;</span>' +
+        '</div>' +
+        '<div class="bug-body">' +
+          '<dl class="bug-kv">' +
+            (f.descripcion ? '<dt>Descripción</dt><dd>'+escapeHtml(f.descripcion)+'</dd>' : '') +
+            (f.cause ? '<dt>Causa</dt><dd>'+escapeHtml(f.cause)+'</dd>' : '') +
+            (f.reproSteps && f.reproSteps.length
+              ? '<dt>Pasos para reproducir</dt><dd><ol class="repro-steps">'+f.reproSteps.map(function(s){return '<li>'+escapeHtml(s)+'</li>';}).join('')+'</ol></dd>'
+              : '') +
+          '</dl>' +
+          '<div class="bug-kv" style="grid-template-columns:140px 1fr;"><dt>Evidencia</dt><dd>'+evidence+'</dd></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    list.querySelectorAll('[data-toggle]').forEach(function(head){
+      head.addEventListener('click', function(){ head.parentElement.classList.toggle('open'); });
+    });
+  }
+
+  function renderTestCases(filter){
+    var tbody = document.querySelector('#testcases-table tbody');
+    var filtered = TESTCASES.filter(function(t){ return filter==='all' || t.result===filter; });
+    if(!filtered.length){ tbody.innerHTML = '<tr><td colspan="3"><p class="empty-state">Nada que mostrar con este filtro.</p></td></tr>'; return; }
+    tbody.innerHTML = filtered.map(function(t){
+      var pill = '<span class="res-pill res-'+t.result+'">'+RES_LABEL[t.result]+'</span>';
+      if(t.result==='bug') pill += '<span class="bug-ref">'+escapeHtml(t.findingId)+'</span>';
+      return '<tr>' +
+        '<td class="id-cell">'+t.tcs.map(escapeHtml).join(', ')+'</td>' +
+        '<td class="wrap">'+escapeHtml(t.title)+'</td>' +
+        '<td>'+pill+'</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('#tc-filters .chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('#tc-filters .chip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      renderTestCases(chip.dataset.fval);
+    });
+  });
+
+  var themeBtn = document.getElementById('theme-btn');
+  var themeState = 'system';
+  function applyTheme(){
+    if(themeState==='system'){ document.documentElement.removeAttribute('data-theme'); themeBtn.textContent='System'; }
+    else { document.documentElement.setAttribute('data-theme', themeState); themeBtn.textContent = themeState==='dark' ? 'Dark' : 'Light'; }
+  }
+  themeBtn.addEventListener('click', function(){
+    themeState = themeState==='system' ? 'light' : themeState==='light' ? 'dark' : 'system';
+    try{ localStorage.setItem('hallazgos-dash-theme', themeState); }catch(e){}
+    applyTheme();
+  });
+  try{ var saved = localStorage.getItem('hallazgos-dash-theme'); if(saved){ themeState = saved; } }catch(e){}
+  applyTheme();
+
+  if(TESTCASES.length){ document.getElementById('nav-testcases').hidden = false; }
+
+  renderBugs();
+  if(TESTCASES.length) renderTestCases('all');
+})();
+</script>
+</body>
+</html>
